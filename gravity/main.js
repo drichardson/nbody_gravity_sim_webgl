@@ -1,8 +1,11 @@
 function main(canvas) {
+    'use strict';
+
     //console.log("main called with canvas " + canvas);
     var simWorker = new Worker("simulation.js");
     var objectList = [];
     var renderer = draw.create(canvas);
+    renderer.backgroundRGB = [0,0,0];
 
     // Start worker thread to run simulation. This updates the objectList.
     simWorker.onmessage = function(e) {
@@ -19,7 +22,9 @@ function main(canvas) {
     // Start animation callbacks. This always uses the latest objectList to draw.
     function drawFrame() {
         //console.log("Draw " + objectList.length + " objects");
-        renderer.draw();
+        renderer.clear();
+        renderer.drawCircle(0, 0, 0.25, [1,1,0]);
+        //renderer.drawCircle(0, 0, 0.25, [1,1,0]);
         window.requestAnimationFrame(drawFrame);
     }
     drawFrame();

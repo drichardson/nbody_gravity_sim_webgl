@@ -5,6 +5,7 @@
 // Simulation
 //
 var simulator = (function() {
+'use strict';
 var sim = {};
 
 var G = 6.67384e-11;
@@ -49,6 +50,8 @@ return sim;
 // Web Worker
 //
 var worker = (function() {
+'use strict';
+
 var o = {};
 var timerHandle;
 var sim;
@@ -77,6 +80,7 @@ return o;
 })();
 
 onmessage = function(e) {
+    'use strict';
     var msg = e.data;
     var command = msg.command;
     //console.log("simulation.js onmessage command = " + command);
