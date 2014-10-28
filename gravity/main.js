@@ -16,7 +16,7 @@ function main(canvas) {
         }
     }
 
-    simWorker.postMessage({ command: "start", updateInterval: 1000 });
+    simWorker.postMessage({ command: "start", updateInterval: 1000 / 60 });
     //setTimeout(function() { simWorker.postMessage({command: "stop"}); }, 5000);
 
     // Start animation callbacks. This always uses the latest objectList to draw.
@@ -26,15 +26,24 @@ function main(canvas) {
         renderer.activate();
         renderer.clear();
 
+        // Draw x and y axes
         var m = mat4.create();
         renderer.setModelMatrix(m);
         renderer.drawAxis(1, 3, 0.25);
         mat4.rotateZ(m, m, Math.PI / 2);
         renderer.setModelMatrix(m);
         renderer.drawAxis(1, 3, 0.25);
-        renderer.drawCircle(0, 0, 1, [1,1,0]);
-        x += 0.1;
-        renderer.drawCircle(0.5*Math.cos(x), Math.sin(x), 0.25, [1,0,0]);
+
+        // Draw objects
+        var len = objectList.length;
+        for(var i = 0; i < len; ++i) {
+            var o = objectList[i];
+            renderer.drawCircle(o.x, o.y, 0.5, o.rgb);
+        }
+
+        //renderer.drawCircle(0, 0, 1, [1,1,0]);
+        //x += 0.1;
+        //renderer.drawCircle(0.5*Math.cos(x), Math.sin(x), 0.25, [1,0,0]);
         //renderer.drawCircle(Math.sin(x), 0, 0.25, [0,1,0]);
         //renderer.drawCircle(Math.cos(x), -0.5, 0.1, [0,0,1]);
         window.requestAnimationFrame(drawFrame);
