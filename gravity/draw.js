@@ -146,7 +146,7 @@ api.create = function(canvas) {
         gl.useProgram(circleProgram);
     }
 
-    obj.drawLine = function(p1, p2, thickness) {
+    obj.drawLine = function(p1, p2) {
         var x1 = p1[0]; var y1 = p1[1];
         var x2 = p2[0]; var y2 = p2[1];
         gl.bindBuffer(gl.ARRAY_BUFFER, linesBufferObject);
@@ -155,11 +155,13 @@ api.create = function(canvas) {
         gl.drawArrays(gl.LINES, 0, 2);
     }
 
+    obj.lineWidth = function(w) {
+        gl.lineWidth(w);
+    }
+
     obj.drawAxis = function(step, end, tickHeight) {
         var rgb = [1,1,1];
         gl.uniform4f(uFillColor, rgb[0], rgb[1], rgb[2], 1);
-
-        gl.lineWidth(1);
         
         // draw axis line
         obj.drawLine([-end, 0], [end, 0]);

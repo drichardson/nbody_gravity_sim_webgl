@@ -1,3 +1,9 @@
+var showAxes = false;
+
+function setShowAxes(show) {
+    showAxes = show;
+}
+
 function main(canvas) {
     'use strict';
 
@@ -32,19 +38,21 @@ function main(canvas) {
 
         var m = mat4.create();
         mat4.identity(m);
-        var metersPerPixel = 4 * 149600000e3 / canvas.width; // 3 x distance from sun to earth
+        var metersFromSunToEarth = 149600000e3; 
+        var metersPerPixel = 4 * metersFromSunToEarth / canvas.width; 
         mat4.scale(m, m, [1/metersPerPixel,1/metersPerPixel,1/metersPerPixel]);
         renderer.setViewMatrix(m);
 
         // Draw x and y axes
-        /*
-        m = mat4.create();
-        renderer.setModelMatrix(m);
-        renderer.drawAxis(100 * metersPerPixel, 300*metersPerPixel, 5*metersPerPixel);
-        mat4.rotateZ(m, m, Math.PI / 2);
-        renderer.setModelMatrix(m);
-        renderer.drawAxis(100 * metersPerPixel, 300*metersPerPixel, 5*metersPerPixel);
-        */
+        if (showAxes) {
+            m = mat4.create();
+            renderer.setModelMatrix(m);
+            renderer.lineWidth(0.01);
+            renderer.drawAxis(100 * metersPerPixel, 500*metersPerPixel, 5*metersPerPixel);
+            mat4.rotateZ(m, m, Math.PI / 2);
+            renderer.setModelMatrix(m);
+            renderer.drawAxis(100 * metersPerPixel, 300*metersPerPixel, 5*metersPerPixel);
+        }
 
         // Draw objects
         var len = objectList.length;
