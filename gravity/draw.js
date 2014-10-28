@@ -118,10 +118,10 @@ api.create = function(canvas) {
 
         // Set model, view, and projection matricies.
         modelMatrix = mat4.create();
-        mat4.translate(modelMatrix, modelMatrix, [0, 0, 5]);
+        //mat4.translate(modelMatrix, modelMatrix, [0, 0, 0]);
         viewMatrix = mat4.create();
-        mat4.translate(viewMatrix, viewMatrix, [-5,0,-10]);
-        mat4.scale(viewMatrix, viewMatrix, [50,50,1]);
+        //mat4.translate(viewMatrix, viewMatrix, [0,0,0]);
+        //mat4.scale(viewMatrix, viewMatrix, [1,1,1]);
         //mat4.rotateZ(viewMatrix, viewMatrix, Math.PI*10/180);
         projectionMatrix = mat4.create();
         mat4.ortho(projectionMatrix, -w/2, w/2, -h/2, h/2, -1, 100);
@@ -175,6 +175,10 @@ api.create = function(canvas) {
 
     obj.setModelMatrix = function(m) {
         gl.uniformMatrix4fv(uModel, false, m);
+    }
+    
+    obj.setViewMatrix = function(m) {
+        gl.uniformMatrix4fv(uView, false, m);
     }
     
     obj.drawCircle = function(x, y, r, rgb) {

@@ -11,12 +11,16 @@ function main(canvas) {
     simWorker.onmessage = function(e) {
         //console.log("Called back with " + e.data);
         var msg = e.data;
+        //console.log("Simulation time: " + msg.time);
         if (msg.command == "updated") {
             objectList = msg.objects;
         }
     }
 
-    simWorker.postMessage({ command: "start", updateInterval: 1000 / 60 });
+    simWorker.postMessage({ command: "start",
+        updateInterval: 1,
+        simulationSecondsPerUpdate: 1e4
+    });
     //setTimeout(function() { simWorker.postMessage({command: "stop"}); }, 5000);
 
     // Start animation callbacks. This always uses the latest objectList to draw.
@@ -26,19 +30,27 @@ function main(canvas) {
         renderer.activate();
         renderer.clear();
 
-        // Draw x and y axes
         var m = mat4.create();
+        mat4.identity(m);
+        var metersPerPixel = 4 * 149600000e3 / canvas.width; // 3 x distance from sun to earth
+        mat4.scale(m, m, [1/metersPerPixel,1/metersPerPixel,1/metersPerPixel]);
+        renderer.setViewMatrix(m);
+
+        // Draw x and y axes
+        /*
+        m = mat4.create();
         renderer.setModelMatrix(m);
-        renderer.drawAxis(1, 3, 0.25);
+        renderer.drawAxis(100 * metersPerPixel, 300*metersPerPixel, 5*metersPerPixel);
         mat4.rotateZ(m, m, Math.PI / 2);
         renderer.setModelMatrix(m);
-        renderer.drawAxis(1, 3, 0.25);
+        renderer.drawAxis(100 * metersPerPixel, 300*metersPerPixel, 5*metersPerPixel);
+        */
 
         // Draw objects
         var len = objectList.length;
         for(var i = 0; i < len; ++i) {
             var o = objectList[i];
-            renderer.drawCircle(o.x, o.y, 0.5, o.rgb);
+            renderer.drawCircle(o.x, o.y, 3*metersPerPixel/*o.r*/, o.rgb);
         }
 
         //renderer.drawCircle(0, 0, 1, [1,1,0]);
