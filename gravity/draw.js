@@ -7,36 +7,16 @@ var gVertexShaderSrc =
     "uniform mat4 u_model;\n" +
     "uniform mat4 u_view;\n" +
     "uniform mat4 u_projection;\n" +
-    "varying vec2 v_position;\n" +
+    "uniform mediump vec2 u_center;\n" +
     "void main() { \n" +
     "  gl_Position = u_projection * u_view * u_model * vec4(a_vertex,0,1);\n" +
-    "  v_position = vec2(a_vertex);\n" +
     "}";
 
-var gFragmentShaderSrc =
-    "precision mediump float;\n" +
-    "uniform vec4 u_backgroundColor;\n" +
+var gFragmentShaderSrc = "precision mediump float;\n" +
     "uniform vec4 u_fillColor;\n" +
-    "uniform float u_hardRadius;\n" + 
-    "uniform float u_softRadius;\n" + 
-    "varying vec2 v_position;\n" +
-    "void main() {\n" +
-    "  if (u_hardRadius > 0.0) {\n" +
-    "    float d = distance(v_position, vec2(0.0,0.0));\n" +
-    "    if(d < u_hardRadius) {\n" + 
-    "      gl_FragColor = u_fillColor;\n" +
-    "    } else if (d < u_softRadius) {\n" +
-    // could switch the gradient calculations to all multiplications if I changed
-    // the uniforms to precalculate the ratios.
-    "      float gradient = (d - u_hardRadius) / (u_softRadius - u_hardRadius);\n" +
-    "      gl_FragColor = mix(vec4(u_fillColor), vec4(u_backgroundColor), gradient);\n" +
-    "    } else {\n" +
-    "      discard;\n" +
-    "    }\n" +
-    "  } else {\n" +
-    "    gl_FragColor = u_fillColor;\n" +
-    "  }\n" +
-    "}";
+    "void main() { \n" +
+    "  gl_FragColor = u_fillColor;\n" +
+    " }";
 
 function compileShader(gl, src, type) {
     var shader = gl.createShader(type);
@@ -62,6 +42,25 @@ function linkProgram(gl, vertexShaderSrc, fragmentShaderSrc) {
     return program;
 }
 
+function circleTriangleFanVerticies(circleCircumferenceVerticies) {
+    // circle uses triangle fan, so 1 center pointer plus 1 point for each
+    // vertex on the circumference plus 1 more to connect the last one.
+    var totalVerticies = circleCircumferenceVerticies + 2;
+    var v = new Float32Array(totalVerticies * 2);
+    v[0] = v[1] = 0; // center x,y at origin
+    var vertexI = 2;
+    var factor = Math.PI * 2 / circleCircumferenceVerticies;
+    for(var i = 0; i < circleCircumferenceVerticies; ++i) {
+        var theta = i * factor;
+        v[vertexI] = Math.cos(theta);
+        v[vertexI + 1] = Math.sin(theta);
+        vertexI += 2;
+    }
+    v[vertexI] = 1; // because Math.cos(0) == 1
+    v[vertexI + 1] = 0; // because Math.sin(0) == 0
+    return v;
+}
+
 var api = {};
 
 api.create = function(canvas) {
@@ -78,17 +77,9 @@ api.create = function(canvas) {
     var uView;
     var uProjection;
     var uFillColor;
-    var uBackgroundColor;
-    var uHardRadius;
-    var uSoftRadius;
     var triangleBufferObject;
-
-    // Line Program variables
     var linesBufferObject;
-    var uLinesFillColor;
-    var uLinesModelMatrix;
-    var uLinesViewMatrix;
-    var uLinesProjectionMatrix;
+    var circleFanVertexCount;
 
     function initCircleProgram() {
         var program = linkProgram(gl, gVertexShaderSrc, gFragmentShaderSrc);
@@ -103,34 +94,18 @@ api.create = function(canvas) {
         uView = gl.getUniformLocation(program, "u_view");
         uProjection = gl.getUniformLocation(program, "u_projection");
         uFillColor = gl.getUniformLocation(program, "u_fillColor");
-        uBackgroundColor = gl.getUniformLocation(program, "u_backgroundColor");
-        uHardRadius = gl.getUniformLocation(program, "u_hardRadius");
-        uSoftRadius = gl.getUniformLocation(program, "u_softRadius");
+
+        var v = circleTriangleFanVerticies(100);
+        circleFanVertexCount = v.length / 2;
 
         gl.enableVertexAttribArray(aVertex);
         triangleBufferObject = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleBufferObject);
-        var v = [
-            -0.5, -0.5,
-            -0.5, 0.5,
-            0.5, -0.5,
-            0.5, 0.5 ];
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, v, gl.STATIC_DRAW);
 
         linesBufferObject = gl.createBuffer();
 
         return program;
-    }
-
-    function initLinesProgram() {
-        var program = linkProgram(gVertexShaderSrc, gLinesFragmentShaderSrc);
-        if (!program) {
-            console.error("Error linking circle program.");
-            return false;
-        }
-
-        gl.useProgram(program);
-        uLinesFillColor = gl.getUniformLocation(program, "u_fillColor");
     }
 
     function init() {
@@ -140,7 +115,6 @@ api.create = function(canvas) {
         gl.viewport(0,0,w,h);
 
         circleProgram = initCircleProgram();
-        //linesProgram = initLinesProgram();        
 
         // Set model, view, and projection matricies.
         modelMatrix = mat4.create();
@@ -184,7 +158,6 @@ api.create = function(canvas) {
     obj.drawAxis = function(step, end, tickHeight) {
         var rgb = [1,1,1];
         gl.uniform4f(uFillColor, rgb[0], rgb[1], rgb[2], 1);
-        gl.uniform1f(uHardRadius, 0.0);
 
         gl.lineWidth(1);
         
@@ -206,21 +179,15 @@ api.create = function(canvas) {
     
     obj.drawCircle = function(x, y, r, rgb) {
         gl.uniform4f(uFillColor, rgb[0], rgb[1], rgb[2], 1);
-        gl.uniform1f(uHardRadius, r - 0.02);
-        gl.uniform1f(uSoftRadius, r);
-        gl.uniform4f(uBackgroundColor,
-                obj.backgroundRGB[0],
-                obj.backgroundRGB[1],
-                obj.backgroundRGB[2],
-                1);
 
         mat4.identity(modelMatrix);
         mat4.translate(modelMatrix, modelMatrix, [x, y, 0]);
+        mat4.scale(modelMatrix, modelMatrix, [r,r,r]);
         gl.uniformMatrix4fv(uModel, false, modelMatrix);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, triangleBufferObject);
         gl.vertexAttribPointer(aVertex, 2, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.drawArrays(gl.TRIANGLE_FAN, 0, circleFanVertexCount);
     }
 
     if (!init()) {

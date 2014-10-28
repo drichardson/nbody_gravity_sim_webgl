@@ -32,9 +32,9 @@ function main(canvas) {
         mat4.rotateZ(m, m, Math.PI / 2);
         renderer.setModelMatrix(m);
         renderer.drawAxis(1, 3, 0.25);
-        renderer.drawCircle(0, 0, 0.25, [1,1,0]);
+        renderer.drawCircle(0, 0, 1, [1,1,0]);
         x += 0.1;
-        //renderer.drawCircle(0.5*Math.cos(x), Math.sin(x), 0.25, [1,1,0]);
+        renderer.drawCircle(0.5*Math.cos(x), Math.sin(x), 0.25, [1,0,0]);
         //renderer.drawCircle(Math.sin(x), 0, 0.25, [0,1,0]);
         //renderer.drawCircle(Math.cos(x), -0.5, 0.1, [0,0,1]);
         window.requestAnimationFrame(drawFrame);
